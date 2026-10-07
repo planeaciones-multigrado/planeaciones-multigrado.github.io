@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://planeaciones-multigrado.github.io/sitemap.xml
