@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pide tu planeación · Planeaciones Multigrado</title>
+<meta name="description" content="Pide tu planeación de la Nueva Escuela Mexicana aquí mismo, sin instalar nada: la primera es gratis.">
+<meta name="theme-color" content="#247BA0">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📚%3C/text%3E%3C/svg%3E">
+<style>
+:root{--coral:#F25F5C;--turq:#247BA0;--verde:#70C1B3;--crema:#FFF8E7;--amarillo:#FFE066;--tinta:#1F2A44;--gris:#5b6475;--burbuja:#fff;--mia:#DDF1EC}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--crema);color:var(--tinta);display:flex;flex-direction:column;font-size:16px;line-height:1.45}
+header{background:var(--turq);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;flex:none;box-shadow:0 2px 0 var(--tinta)}
+header a.volver{color:#fff;text-decoration:none;font-size:22px;line-height:1;padding:4px}
+.marca{font-weight:900;font-size:16px}
+#estado{font-size:12px;opacity:.9;display:flex;align-items:center;gap:5px}
+#estado::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--amarillo)}
+#estado.ok::before{background:#7CE38B}
+#estado.mal::before{background:var(--coral)}
+main{flex:1;overflow-y:auto;padding:14px 12px 8px;-webkit-overflow-scrolling:touch}
+#mensajes{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:88%;padding:9px 12px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 1px 0 rgba(31,42,68,.15)}
+.msg.bot{background:var(--burbuja);align-self:flex-start;border-top-left-radius:4px}
+.msg.docente{background:var(--mia);align-self:flex-end;border-top-right-radius:4px}
+.msg a{color:var(--turq)}
+.msg code,.msg pre{font-family:ui-monospace,Consolas,monospace;background:#f1efe6;border-radius:4px;padding:0 3px}
+.botones{display:flex;flex-direction:column;gap:6px;margin-top:9px;white-space:normal}
+.fila{display:flex;gap:6px}
+.fila button{flex:1}
+.botones button{background:var(--crema);border:2px solid var(--turq);color:var(--tinta);border-radius:10px;padding:9px 8px;font:inherit;font-size:15px;font-weight:600;cursor:pointer;min-height:44px}
+.botones button:active{background:var(--amarillo)}
+.botones button:disabled{opacity:.5}
+.archivo{display:flex;align-items:center;gap:10px;background:#f6f3ea;border-radius:10px;padding:8px 10px;margin:2px 0 6px;white-space:normal}
+.archivo .icono{font-size:26px}
+.archivo .nombre{font-weight:700;overflow-wrap:anywhere}
+.archivo .tam{font-size:12px;color:var(--gris)}
+.archivo a.bajar{margin-left:auto;background:var(--coral);color:#fff;text-decoration:none;font-weight:800;border-radius:9px;padding:8px 10px;font-size:14px;white-space:nowrap}
+.tarjeta{background:#fff;border:2px solid var(--tinta);border-radius:14px;padding:12px;box-shadow:3px 3px 0 var(--tinta);align-self:stretch;white-space:normal}
+.tarjeta p{margin:0 0 8px}
+.tarjeta input{width:100%;font:inherit;font-size:17px;padding:10px;border:2px solid #c9c3b3;border-radius:10px;margin-bottom:8px;background:#fff;color:var(--tinta)}
+.tarjeta input:focus{outline:none;border-color:var(--turq)}
+.tarjeta button,.btn{background:var(--coral);color:#fff;border:0;border-radius:10px;padding:11px 14px;font:inherit;font-weight:800;cursor:pointer;width:100%;min-height:44px;text-decoration:none;display:block;text-align:center}
+.tarjeta button.sec,.btn.sec{background:var(--crema);color:var(--tinta);border:2px solid var(--tinta)}
+.tarjeta .error{color:#b3261e;font-size:14px;margin:0 0 8px}
+.tarjeta .ok{color:#1d6b3a;font-weight:700;margin:0}
+.tarjeta .vinculos{display:flex;flex-direction:column;gap:8px}
+.escribiendo{align-self:flex-start;background:#fff;border-radius:14px;padding:8px 14px;color:var(--gris);font-size:14px}
+.escribiendo span{animation:p 1.2s infinite}
+.escribiendo span:nth-child(2){animation-delay:.2s}.escribiendo span:nth-child(3){animation-delay:.4s}
+@keyframes p{0%,60%,100%{opacity:.25}30%{opacity:1}}
+footer{flex:none;background:#fff;border-top:2px solid var(--tinta);padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
+.dentro{max-width:720px;margin:0 auto}
+#teclado{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+#teclado:empty{display:none}
+#teclado button{flex:1 1 40%;background:var(--crema);border:2px solid var(--tinta);border-radius:10px;padding:5px 6px;font:inherit;font-size:13px;font-weight:700;color:var(--tinta);min-height:36px;cursor:pointer;line-height:1.2}
+.barra{display:flex;gap:8px;align-items:flex-end}
+#texto{flex:1;min-width:0;font:inherit;font-size:16px;border:2px solid #c9c3b3;border-radius:20px;padding:9px 14px;resize:none;max-height:120px;background:#fff;color:var(--tinta)}
+#texto:focus{outline:none;border-color:var(--turq)}
+.redondo{flex:none;width:44px;height:44px;border-radius:50%;border:0;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#adjuntar{background:var(--crema);border:2px solid var(--tinta)}
+#enviar{background:var(--coral);color:#fff}
+#archivo{display:none}
+.pie{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--gris);margin-top:6px}
+.pie a{color:var(--gris)}
+#aviso{position:fixed;left:50%;transform:translateX(-50%);bottom:130px;background:var(--tinta);color:#fff;padding:9px 14px;border-radius:10px;font-size:14px;max-width:calc(100% - 32px);display:none;z-index:5}
+@media (prefers-reduced-motion:reduce){.escribiendo span{animation:none}}
+</style>
+</head>
+<body>
+<header>
+  <a class="volver" href="/" aria-label="Volver a la página">←</a>
+  <div><div class="marca">Planeaciones Multigrado</div><div id="estado">Conectando…</div></div>
+</header>
+<main id="principal"><div id="mensajes" aria-live="polite"></div></main>
+<footer>
+  <div class="dentro">
+    <div id="teclado"></div>
+    <form class="barra" id="formulario" autocomplete="off">
+      <button type="button" class="redondo" id="adjuntar" aria-label="Mandar foto o archivo">📎</button>
+      <input type="file" id="archivo" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">
+      <textarea id="texto" rows="1" placeholder="Escribe tu duda…" aria-label="Mensaje"></textarea>
+      <button type="submit" class="redondo" id="enviar" aria-label="Enviar">➤</button>
+    </form>
+    <div class="pie"><a href="#" id="recuperar" hidden>¿Ya tienes un pedido? Recupéralo</a><a href="https://t.me/Planeacionesmultigradobot?start=web" target="_blank" rel="noopener">¿Prefieres Telegram? Ábrelo aquí</a></div>
+  </div>
+</footer>
+<div id="aviso" role="status"></div>
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const REPO = 'https://api.github.com/repos/planeaciones-multigrado/planeaciones-multigrado.github.io/contents/conexion.json';
+  // ?api=, ?conexion= y ?fuera= son solo para pruebas en esta PC: en el sitio real se ignoran y solo se acepta una
+  // dirección del túnel (*.trycloudflare.com). Así un enlace con ?api=otro-sitio no puede llevarse la clave del chat.
+  const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const prueba = (k) => (LOCAL ? params.get(k) || '' : '');
+  const DIRECCION_VALIDA = LOCAL ? /^https?:\/\/\S+$/ : /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/;
+  const CONEXION = prueba('conexion');
+  const FUERA_MS = Number(prueba('fuera')) || 60000;
+  const START = (params.get('start') || 'web').replace(/[^a-z0-9_]/gi, '').slice(0, 32);
+  const $ = (id) => document.getElementById(id);
+  const lista = $('mensajes');
+  const guardado = {
+    leer(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    poner(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } },
+  };
+  let api = prueba('api');
+  let clave = params.get('c') || guardado.leer('pm_clave');
+  if (params.get('c')) {
+    guardado.poner('pm_clave', clave);
+    params.delete('c');
+    history.replaceState(null, '', `${location.pathname}${params.toString() ? `?${params}` : ''}`);
+  }
+  let ultimo = 0;
+  const vistos = new Map(); // id → elemento
+  let esperandoRespuesta = 0;
+  let caidoDesde = 0;
+
+  // ---------- utilidades ----------
+  function aviso(texto) {
+    const a = $('aviso');
+    a.textContent = texto;
+    a.style.display = 'block';
+    clearTimeout(aviso.t);
+    aviso.t = setTimeout(() => { a.style.display = 'none'; }, 4000);
+  }
+  function estado(texto, clase) {
+    const e = $('estado');
+    e.textContent = texto;
+    e.className = clase || '';
+  }
+  const abajo = () => { const m = $('principal'); m.scrollTop = m.scrollHeight; };
+  const tamano = (n) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+
+  // Solo se pintan las etiquetas que usa Telegram; lo demás queda como texto.
+  const PERMITIDAS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'S', 'CODE', 'PRE', 'A']);
+  function pintarHtml(destino, html) {
+    const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
+    const copiar = (origen, a) => {
+      for (const n of origen.childNodes) {
+        if (n.nodeType === Node.TEXT_NODE) { a.appendChild(document.createTextNode(n.textContent)); continue; }
+        if (n.nodeType !== Node.ELEMENT_NODE) continue;
+        if (!PERMITIDAS.has(n.tagName)) { copiar(n, a); continue; }
+        if (n.tagName === 'A') {
+          const href = n.getAttribute('href') || '';
+          if (!/^https:\/\//i.test(href)) { copiar(n, a); continue; }
+          const enlace = document.createElement('a');
+          enlace.href = href;
+          enlace.target = '_blank';
+          enlace.rel = 'noopener';
+          copiar(n, enlace);
+          a.appendChild(enlace);
+          continue;
+        }
+        const e = document.createElement(n.tagName.toLowerCase());
+        copiar(n, e);
+        a.appendChild(e);
+      }
+    };
+    copiar(doc.body.firstChild, destino);
+  }
+
+  // ---------- conexión con la PC ----------
+  async function buscarDireccion() {
+    if (prueba('api')) return prueba('api');
+    const intentos = CONEXION ? [CONEXION] : [`/conexion.json?t=${Date.now()}`, REPO];
+    for (const u of intentos) {
+      try {
+        const r = await fetch(u, { cache: 'no-store' });
+        if (!r.ok) continue;
+        let j = await r.json();
+        if (j.content) j = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\s/g, '')))));
+        const url = String(j.url || '').replace(/\/$/, '');
+        if (DIRECCION_VALIDA.test(url)) return url;
+      } catch { /* siguiente */ }
+    }
+    return '';
+  }
+  class Caida extends Error {}
+  async function llamar(ruta, { metodo = 'GET', cuerpo, cabeceras = {} } = {}) {
+    if (!api) throw new Caida('sin dirección');
+    const h = { ...cabeceras };
+    if (clave) h['X-Clave'] = clave;
+    let body = cuerpo;
+    if (cuerpo !== undefined && !(cuerpo instanceof Blob)) { h['Content-Type'] = 'application/json'; body = JSON.stringify(cuerpo); }
+    let r;
+    try {
+      r = await fetch(api + ruta, { method: metodo, headers: h, body });
+    } catch (e) {
+      throw new Caida(e.message);
+    }
+    if (r.status === 502 || r.status === 503 || r.status === 530) throw new Caida(`HTTP ${r.status}`);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error(j.error || 'Algo falló. Intenta otra vez.'), { status: r.status });
+    return j;
+  }
+  function marcarCaida() {
+    if (!caidoDesde) caidoDesde = Date.now();
+    estado('Conectando…', 'mal');
+    if (Date.now() - caidoDesde >= FUERA_MS) mostrarFuera();
+  }
+  function marcarBien() {
+    caidoDesde = 0;
+    estado('En línea', 'ok');
+    const f = $('fuera');
+    if (f) f.remove();
+  }
+  function mostrarFuera() {
+    if ($('fuera')) return;
+    const t = document.createElement('div');
+    t.className = 'tarjeta';
+    t.id = 'fuera';
+    t.innerHTML = '<p><b>Estamos fuera de línea un momento.</b> Vuelve a intentar en unos minutos o escríbenos:</p>' +
+      '<div class="vinculos"><a class="btn" href="mailto:pumacopia@gmail.com?subject=Planeaciones%20Multigrado">✉️ Escríbenos por correo</a>' +
+      '<a class="btn sec" href="https://t.me/Planeacionesmultigradobot?start=web" target="_blank" rel="noopener">Telegram</a></div>';
+    lista.appendChild(t);
+    abajo();
+  }
+  // Cuando algo falla por la conexión: buscar otra vez la dirección (el túnel pudo cambiar) y reintentar.
+  async function reconectar() {
+    marcarCaida();
+    await new Promise((ok) => setTimeout(ok, api ? 1500 : 0));
+    api = (await buscarDireccion()) || api;
+  }
+
+  // ---------- mensajes ----------
+  function botonesDe(m) {
+    const caja = document.createElement('div');
+    caja.className = 'botones';
+    for (const fila of m.botones || []) {
+      const f = document.createElement('div');
+      f.className = 'fila';
+      for (const b of fila) {
+        const e = document.createElement('button');
+        e.type = 'button';
+        e.textContent = b.text;
+        e.onclick = () => {
+          if (b.url) return window.open(b.url, '_blank', 'noopener');
+          if (b.callback_data) tocarBoton(b.callback_data, m.id, e);
+        };
+        f.appendChild(e);
+      }
+      caja.appendChild(f);
+    }
+    return caja;
+  }
+  function tarjetaArchivo(m) {
+    const a = m.archivo;
+    const caja = document.createElement('div');
+    caja.className = 'archivo';
+    const icono = /\.pdf$/i.test(a.nombre) ? '📕' : /\.xlsx?$/i.test(a.nombre) ? '📊' : a.imagen || /\.(png|jpe?g|webp|heic)$/i.test(a.nombre) ? '🖼️' : '📘';
+    caja.innerHTML = `<span class="icono">${icono}</span><div><div class="nombre"></div><div class="tam">${tamano(a.tam || 0)}</div></div>`;
+    caja.querySelector('.nombre').textContent = a.nombre;
+    if (m.de === 'bot' && a.token) {
+      const bajar = document.createElement('a');
+      bajar.className = 'bajar';
+      bajar.textContent = 'Descargar';
+      bajar.href = `${api}/chat/descargar/${a.token}?k=${clave}`;
+      bajar.setAttribute('download', a.nombre);
+      caja.appendChild(bajar);
+    }
+    return caja;
+  }
+  function tarjetaCorreo(m) {
+    const t = document.createElement('div');
+    t.className = 'tarjeta tarjeta-correo';
+    const yaVerificado = guardado.leer('pm_correo');
+    const p = document.createElement('p');
+    pintarHtml(p, m.html);
+    t.appendChild(p);
+    const error = document.createElement('p');
+    error.className = 'error';
+    error.hidden = true;
+    const correo = document.createElement('input');
+    correo.type = 'email';
+    correo.placeholder = 'tucorreo@ejemplo.com';
+    correo.autocomplete = 'email';
+    correo.value = yaVerificado || '';
+    const pedirBtn = document.createElement('button');
+    pedirBtn.type = 'button';
+    pedirBtn.textContent = 'Enviar código';
+    const codigo = document.createElement('input');
+    codigo.inputMode = 'numeric';
+    codigo.autocomplete = 'one-time-code';
+    codigo.maxLength = 6;
+    codigo.placeholder = 'Código de 6 números';
+    codigo.hidden = true;
+    const confirmar = document.createElement('button');
+    confirmar.type = 'button';
+    confirmar.textContent = 'Confirmar';
+    confirmar.hidden = true;
+    const mal = (e) => { error.textContent = e.message; error.hidden = false; };
+    pedirBtn.onclick = async () => {
+      error.hidden = true;
+      pedirBtn.disabled = true;
+      try {
+        await llamar('/correo/pedir', { metodo: 'POST', cuerpo: { correo: correo.value, motivo: 'verificar', reanudar: m.reanudar } });
+        p.textContent = `Te mandamos un código a ${correo.value.trim()}. Revisa tu bandeja (y la de spam).`;
+        codigo.hidden = false;
+        confirmar.hidden = false;
+        pedirBtn.textContent = 'Mandar otro código';
+        pedirBtn.className = 'sec';
+        codigo.focus();
+      } catch (e) { mal(e instanceof Caida ? new Error('Sin conexión. Intenta otra vez.') : e); }
+      pedirBtn.disabled = false;
+    };
+    confirmar.onclick = async () => {
+      error.hidden = true;
+      confirmar.disabled = true;
+      try {
+        const r = await llamar('/correo/verificar', { metodo: 'POST', cuerpo: { correo: correo.value, codigo: codigo.value } });
+        guardado.poner('pm_correo', r.correo);
+        t.replaceChildren(Object.assign(document.createElement('p'), { className: 'ok', textContent: `✅ Correo confirmado: ${r.correo}` }));
+        esperandoRespuesta = Date.now();
+        pintarEscribiendo();
+      } catch (e) { mal(e instanceof Caida ? new Error('Sin conexión. Intenta otra vez.') : e); }
+      confirmar.disabled = false;
+    };
+    t.append(error, correo, codigo, confirmar, pedirBtn);
+    return t;
+  }
+  function burbuja(m) {
+    if (m.tipo === 'pedir_correo') return tarjetaCorreo(m);
+    const e = document.createElement('div');
+    e.className = `msg ${m.de === 'bot' ? 'bot' : 'docente'}`;
+    if (m.tipo === 'archivo') e.appendChild(tarjetaArchivo(m));
+    const texto = document.createElement('div');
+    pintarHtml(texto, m.html || '');
+    if (texto.textContent.trim()) e.appendChild(texto);
+    if (m.botones && m.botones.length) e.appendChild(botonesDe(m));
+    return e;
+  }
+  function pintarTeclado(filas) {
+    const t = $('teclado');
+    t.replaceChildren();
+    for (const b of (filas || []).flat()) {
+      const e = document.createElement('button');
+      e.type = 'button';
+      e.textContent = b.text;
+      e.onclick = () => mandarTexto(b.text);
+      t.appendChild(e);
+    }
+  }
+  function pintarEscribiendo() {
+    let e = $('escribiendo');
+    const activo = esperandoRespuesta && Date.now() - esperandoRespuesta < 60000;
+    if (!activo) { if (e) e.remove(); return; }
+    if (!e) {
+      e = document.createElement('div');
+      e.id = 'escribiendo';
+      e.className = 'escribiendo';
+      e.innerHTML = 'escribiendo<span>.</span><span>.</span><span>.</span>';
+    }
+    lista.appendChild(e);
+    abajo();
+  }
+  function recibir(mensajes) {
+    for (const m of mensajes) {
+      const nuevo = burbuja(m);
+      nuevo.dataset.id = m.id;
+      const viejo = vistos.get(m.id);
+      if (viejo) viejo.replaceWith(nuevo);
+      else lista.appendChild(nuevo);
+      vistos.set(m.id, nuevo);
+      if (m.teclado) pintarTeclado(m.teclado);
+      if (m.de === 'bot') esperandoRespuesta = 0;
+    }
+    // Una tarjeta de correo ya contestada (llegó algo después) no se vuelve a ofrecer.
+    if (mensajes.length) {
+      pintarEscribiendo();
+      abajo();
+    }
+  }
+
+  // ---------- acciones del docente ----------
+  async function enviarCon(fn) {
+    for (let i = 0; i < 3; i++) {
+      try {
+        await fn();
+        esperandoRespuesta = Date.now();
+        pintarEscribiendo();
+        return true;
+      } catch (e) {
+        if (!(e instanceof Caida)) { aviso(e.message); return false; }
+        await reconectar();
+      }
+    }
+    aviso('No hay conexión. Intenta en un momento.');
+    return false;
+  }
+  async function mandarTexto(texto) {
+    const t = String(texto || '').trim();
+    if (!t) return;
+    await enviarCon(() => llamar('/chat/texto', { metodo: 'POST', cuerpo: { texto: t } }));
+  }
+  async function tocarBoton(data, messageId, e) {
+    e.disabled = true;
+    await enviarCon(() => llamar('/chat/boton', { metodo: 'POST', cuerpo: { data, message_id: messageId } }));
+    setTimeout(() => { e.disabled = false; }, 1500);
+  }
+  async function subir(archivo) {
+    if (archivo.size > 10 * 1024 * 1024) return aviso('El archivo pasa de 10 MB. Mándalo más ligero o como PDF.');
+    aviso(`Subiendo ${archivo.name}…`);
+    const tipo = archivo.type || ({ heic: 'image/heic', pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }[archivo.name.split('.').pop().toLowerCase()] || '');
+    const ok = await enviarCon(() => llamar('/chat/archivo', { metodo: 'POST', cuerpo: archivo, cabeceras: { 'Content-Type': tipo, 'X-Nombre': encodeURIComponent(archivo.name) } }));
+    if (ok) aviso('Archivo enviado ✅');
+  }
+
+  // ---------- arranque y lectura continua ----------
+  async function asegurarChat() {
+    if (clave) return;
+    const r = await llamar('/chat/nuevo', { metodo: 'POST', cuerpo: { start: START } });
+    clave = r.clave;
+    guardado.poner('pm_clave', clave);
+  }
+  async function leerSiempre() {
+    for (;;) {
+      try {
+        if (!api) api = await buscarDireccion();
+        await asegurarChat();
+        const r = await llamar(`/chat/mensajes?desde=${ultimo}`);
+        marcarBien();
+        ultimo = r.ultimo;
+        recibir(r.mensajes);
+        $('recuperar').hidden = Boolean(guardado.leer('pm_correo')) || ultimo > 3;
+      } catch (e) {
+        if (e.status === 401) { // la clave ya no existe: chat nuevo
+          clave = null;
+          guardado.poner('pm_clave', null);
+          continue;
+        }
+        if (!(e instanceof Caida)) { aviso(e.message); await new Promise((ok) => setTimeout(ok, 3000)); continue; }
+        await reconectar();
+        await new Promise((ok) => setTimeout(ok, caidoDesde && Date.now() - caidoDesde > 15000 ? 10000 : 2000));
+      }
+      pintarEscribiendo();
+    }
+  }
+
+  // Recuperar un chat desde otro celular con el correo.
+  $('recuperar').onclick = (ev) => {
+    ev.preventDefault();
+    if (document.querySelector('.tarjeta-recuperar')) return;
+    const t = document.createElement('div');
+    t.className = 'tarjeta tarjeta-recuperar';
+    t.innerHTML = '<p>Escribe el correo con el que hiciste tu pedido. Te mandamos un código para abrir tu chat aquí.</p><p class="error" hidden></p>' +
+      '<input type="email" placeholder="tucorreo@ejemplo.com" autocomplete="email"><input inputmode="numeric" maxlength="6" placeholder="Código de 6 números" hidden>' +
+      '<button type="button">Enviar código</button>';
+    const [correo, codigo] = t.querySelectorAll('input');
+    const btn = t.querySelector('button');
+    const error = t.querySelector('.error');
+    btn.onclick = async () => {
+      error.hidden = true;
+      btn.disabled = true;
+      try {
+        if (codigo.hidden) {
+          await llamar('/correo/pedir', { metodo: 'POST', cuerpo: { correo: correo.value, motivo: 'recuperar' } });
+          codigo.hidden = false;
+          btn.textContent = 'Abrir mi chat';
+          codigo.focus();
+        } else {
+          const r = await llamar('/correo/verificar', { metodo: 'POST', cuerpo: { correo: correo.value, codigo: codigo.value } });
+          guardado.poner('pm_clave', r.clave);
+          guardado.poner('pm_correo', correo.value.trim().toLowerCase());
+          location.reload();
+        }
+      } catch (e) {
+        error.textContent = e instanceof Caida ? 'Sin conexión. Intenta otra vez.' : e.message;
+        error.hidden = false;
+      }
+      btn.disabled = false;
+    };
+    lista.appendChild(t);
+    abajo();
+    correo.focus();
+  };
+
+  const texto = $('texto');
+  $('formulario').onsubmit = (ev) => {
+    ev.preventDefault();
+    const t = texto.value;
+    texto.value = '';
+    texto.style.height = '';
+    mandarTexto(t);
+  };
+  texto.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); $('formulario').requestSubmit(); }
+  });
+  texto.addEventListener('input', () => { texto.style.height = ''; texto.style.height = `${Math.min(texto.scrollHeight, 120)}px`; });
+  $('adjuntar').onclick = () => $('archivo').click();
+  $('archivo').onchange = () => {
+    const f = $('archivo').files[0];
+    $('archivo').value = '';
+    if (f) subir(f);
+  };
+  leerSiempre();
+})();
+</script>
+</body>
+</html>
