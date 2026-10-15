@@ -107,9 +107,15 @@ footer{flex:none;background:#fff;border-top:2px solid var(--tinta);padding:8px 1
     poner(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } },
   };
   let api = prueba('api');
-  let clave = params.get('c') || guardado.leer('pm_clave');
-  if (params.get('c')) {
-    guardado.poner('pm_clave', clave);
+  let clave = guardado.leer('pm_clave');
+  // ?c= viene en los enlaces de los correos. Si ya hay otro chat guardado, se pregunta antes de cambiar
+  // (un enlace ajeno no debe meter al docente al chat de otra persona).
+  const enlace = params.get('c');
+  if (enlace) {
+    if (!clave || clave === enlace || window.confirm('Este enlace abre otro chat de Planeaciones Multigrado. ¿Quieres cambiarte a ese chat?')) {
+      clave = enlace;
+      guardado.poner('pm_clave', clave);
+    }
     params.delete('c');
     history.replaceState(null, '', `${location.pathname}${params.toString() ? `?${params}` : ''}`);
   }
@@ -201,8 +207,13 @@ footer{flex:none;background:#fff;border-top:2px solid var(--tinta);padding:8px 1
     estado('Conectando…', 'mal');
     if (Date.now() - caidoDesde >= FUERA_MS) mostrarFuera();
   }
+  // Los «Descargar» ya pintados usan la dirección actual (el túnel pudo cambiar).
+  function actualizarDescargas() {
+    for (const a of document.querySelectorAll('a.bajar')) a.href = `${api}/chat/descargar/${a.dataset.token}?k=${clave}`;
+  }
   function marcarBien() {
     caidoDesde = 0;
+    actualizarDescargas();
     estado('En línea', 'ok');
     const f = $('fuera');
     if (f) f.remove();
@@ -257,6 +268,7 @@ footer{flex:none;background:#fff;border-top:2px solid var(--tinta);padding:8px 1
       const bajar = document.createElement('a');
       bajar.className = 'bajar';
       bajar.textContent = 'Descargar';
+      bajar.dataset.token = a.token;
       bajar.href = `${api}/chat/descargar/${a.token}?k=${clave}`;
       bajar.setAttribute('download', a.nombre);
       caja.appendChild(bajar);
@@ -457,6 +469,7 @@ footer{flex:none;background:#fff;border-top:2px solid var(--tinta);padding:8px 1
       try {
         if (codigo.hidden) {
           await llamar('/correo/pedir', { metodo: 'POST', cuerpo: { correo: correo.value, motivo: 'recuperar' } });
+          t.querySelector('p').textContent = 'Si tienes pedidos con ese correo, te llega un código en un minuto (revisa también spam).';
           codigo.hidden = false;
           btn.textContent = 'Abrir mi chat';
           codigo.focus();
