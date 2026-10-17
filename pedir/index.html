@@ -182,6 +182,18 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
   .fila button:not(:only-child){padding:9px 6px;font-size:14px;text-align:center}
 }
 @media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}main{scroll-behavior:auto}}
+/* Visor de la galería (2026-10-17): las páginas de muestra se abren aquí, no en otra pestaña. */
+.visor{position:fixed;inset:0;z-index:50;background:rgba(20,26,40,.94);display:flex;flex-direction:column}
+.visor[hidden]{display:none}
+.visor-barra{display:flex;align-items:center;gap:8px;padding:10px 12px;color:#fff;font-weight:800}
+.visor-barra .cuenta{flex:1;font-size:15px}
+.visor button{font:inherit;font-weight:900;font-size:20px;min-width:44px;height:44px;border-radius:12px;border:2px solid #fff;background:rgba(255,255,255,.12);color:#fff;cursor:pointer}
+.visor button:hover,.visor button:focus-visible{background:rgba(255,255,255,.28);outline:none}
+.visor-lienzo{flex:1;overflow:auto;touch-action:none;display:flex;cursor:grab}
+.visor-lienzo img{margin:auto;display:block;max-width:none;background:#fff;border-radius:6px;user-select:none;-webkit-user-drag:none}
+.visor-flecha{position:fixed;top:50%;transform:translateY(-50%);z-index:51}
+.visor-flecha.ant{left:10px}.visor-flecha.sig{right:10px}
+.visor-pie{color:#cfd6e4;text-align:center;font-size:13px;padding:6px 10px 12px}
 </style>
 </head>
 <body>
@@ -456,18 +468,125 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
     }
     return caja;
   }
-  // Páginas de muestra del formato (solo imágenes de nuestro sitio). Tocar una la abre en grande.
+  // Páginas de muestra del formato (solo imágenes de nuestro sitio). Tocar una la abre en el visor, aquí mismo.
   function galeriaDe(m) {
     const g = document.createElement('div');
     g.className = 'galeria';
-    for (const url of m.fotos || []) {
-      if (!/^https:\/\/planeaciones-multigrado\.github\.io\//.test(url)) continue;
+    const urls = (m.fotos || []).filter((url) => /^https:\/\/planeaciones-multigrado\.github\.io\//.test(url));
+    urls.forEach((url, i) => {
       const a = Object.assign(document.createElement('a'), { href: url, target: '_blank', rel: 'noopener' });
-      a.appendChild(Object.assign(document.createElement('img'), { src: url, alt: 'Página de ejemplo de una planeación', loading: 'lazy' }));
+      a.appendChild(Object.assign(document.createElement('img'), { src: url, alt: `Página de ejemplo de una planeación (${i + 1} de ${urls.length})`, loading: 'lazy' }));
+      a.addEventListener('click', (e) => { e.preventDefault(); visor.abrir(urls, i, a); });
       g.appendChild(a);
-    }
+    });
     return g;
   }
+  // Visor de pantalla casi completa: anterior/siguiente, zoom con botones, pellizco, doble toque o Ctrl+rueda.
+  // El botón «atrás» del celular lo cierra (en vez de salir del chat).
+  const visor = (() => {
+    let urls = [];
+    let i = 0;
+    let zoom = 1;
+    let origen = null;
+    const caja = document.createElement('div');
+    caja.className = 'visor';
+    caja.hidden = true;
+    caja.setAttribute('role', 'dialog');
+    caja.setAttribute('aria-modal', 'true');
+    caja.setAttribute('aria-label', 'Páginas de muestra');
+    caja.innerHTML = '<div class="visor-barra"><span class="cuenta" aria-live="polite"></span>' +
+      '<button type="button" data-a="menos" aria-label="Alejar">−</button><button type="button" data-a="mas" aria-label="Acercar">+</button>' +
+      '<button type="button" data-a="cerrar" aria-label="Cerrar">✕</button></div>' +
+      '<div class="visor-lienzo"><img alt="" draggable="false"></div>' +
+      '<button type="button" class="visor-flecha ant" data-a="ant" aria-label="Página anterior">‹</button>' +
+      '<button type="button" class="visor-flecha sig" data-a="sig" aria-label="Página siguiente">›</button>' +
+      '<div class="visor-pie">Pellizca, toca dos veces o usa + y − para acercar · desliza o usa las flechas para cambiar de página</div>';
+    document.body.appendChild(caja);
+    const lienzo = caja.querySelector('.visor-lienzo');
+    const img = lienzo.querySelector('img');
+    const cuenta = caja.querySelector('.cuenta');
+    const base = () => Math.max(120, Math.min(lienzo.clientWidth - 16, (lienzo.clientHeight - 16) * ((img.naturalWidth / img.naturalHeight) || 0.77)));
+    const pintar = () => { img.style.width = `${Math.round(base() * zoom)}px`; };
+    function zoomA(z) {
+      z = Math.min(4, Math.max(1, z));
+      const fx = (lienzo.scrollLeft + lienzo.clientWidth / 2) / lienzo.scrollWidth;
+      const fy = (lienzo.scrollTop + lienzo.clientHeight / 2) / lienzo.scrollHeight;
+      zoom = z;
+      pintar();
+      lienzo.scrollLeft = fx * lienzo.scrollWidth - lienzo.clientWidth / 2;
+      lienzo.scrollTop = fy * lienzo.scrollHeight - lienzo.clientHeight / 2;
+    }
+    function ir(n) {
+      i = (n + urls.length) % urls.length;
+      zoom = 1;
+      img.src = urls[i];
+      img.alt = `Página de ejemplo ${i + 1} de ${urls.length}`;
+      cuenta.textContent = `Página ${i + 1} de ${urls.length}`;
+      if (img.complete) pintar();
+      lienzo.scrollTo(0, 0);
+    }
+    function cerrar(desdeHistorial) {
+      if (caja.hidden) return;
+      caja.hidden = true;
+      document.body.style.overflow = '';
+      if (!desdeHistorial && history.state && history.state.visor) history.back();
+      if (origen) origen.focus();
+    }
+    img.addEventListener('load', pintar);
+    window.addEventListener('resize', () => { if (!caja.hidden) pintar(); });
+    window.addEventListener('popstate', () => cerrar(true));
+    caja.addEventListener('click', (e) => {
+      const a = e.target.closest('[data-a]');
+      if (!a) return;
+      ({ cerrar: () => cerrar(false), ant: () => ir(i - 1), sig: () => ir(i + 1), mas: () => zoomA(zoom + 0.5), menos: () => zoomA(zoom - 0.5) })[a.dataset.a]();
+    });
+    img.addEventListener('dblclick', () => zoomA(zoom > 1 ? 1 : 2.5));
+    caja.addEventListener('keydown', (e) => {
+      const accion = { Escape: () => cerrar(false), ArrowLeft: () => ir(i - 1), ArrowRight: () => ir(i + 1), '+': () => zoomA(zoom + 0.5), '=': () => zoomA(zoom + 0.5), '-': () => zoomA(zoom - 0.5) }[e.key];
+      if (accion) { e.preventDefault(); accion(); }
+    });
+    lienzo.addEventListener('wheel', (e) => { if (!e.ctrlKey) return; e.preventDefault(); zoomA(zoom - Math.sign(e.deltaY) * 0.25); }, { passive: false });
+    // Pellizco con dos dedos; con uno y sin zoom, deslizar cambia de página.
+    const dedos = new Map();
+    let pellizco = null;
+    let inicio = null;
+    const distancia = () => { const [a, b] = [...dedos.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    lienzo.addEventListener('pointerdown', (e) => {
+      lienzo.setPointerCapture(e.pointerId);
+      dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (dedos.size === 2) { pellizco = { d: distancia(), z: zoom }; inicio = null; } else if (dedos.size === 1) inicio = { x: e.clientX, y: e.clientY };
+    });
+    lienzo.addEventListener('pointermove', (e) => {
+      const antes = dedos.get(e.pointerId);
+      if (!antes) return;
+      dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pellizco && dedos.size === 2) zoomA(pellizco.z * (distancia() / pellizco.d));
+      else if (dedos.size === 1 && zoom > 1) lienzo.scrollBy(antes.x - e.clientX, antes.y - e.clientY); // arrastrar la página ampliada
+    });
+    const soltar = (e) => {
+      if (inicio && zoom === 1 && dedos.size === 1 && urls.length > 1) {
+        const dx = e.clientX - inicio.x;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(e.clientY - inicio.y)) ir(i + (dx < 0 ? 1 : -1));
+      }
+      dedos.delete(e.pointerId);
+      if (dedos.size < 2) pellizco = null;
+      if (!dedos.size) inicio = null;
+    };
+    lienzo.addEventListener('pointerup', soltar);
+    lienzo.addEventListener('pointercancel', soltar);
+    return {
+      abrir(lista, n, desde) {
+        urls = lista;
+        origen = desde;
+        caja.querySelectorAll('.visor-flecha').forEach((b) => { b.hidden = urls.length < 2; });
+        caja.hidden = false;
+        document.body.style.overflow = 'hidden';
+        history.pushState({ visor: true }, '');
+        ir(n);
+        caja.querySelector('[data-a="cerrar"]').focus();
+      },
+    };
+  })();
   function tarjetaArchivo(m) {
     return filaArchivo(m.de === 'bot' && m.archivo.token ? m.archivo.token : '', m.archivo, 'bajar');
   }
