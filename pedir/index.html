@@ -131,6 +131,7 @@ a.bajar svg,a.bajar-panel svg{width:16px;height:16px}
 .escribiendo .puntos i:nth-child(2){animation-delay:.15s}.escribiendo .puntos i:nth-child(3){animation-delay:.3s}
 @keyframes salta{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
 @keyframes entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fila-msg.editado,.tarjeta.editado{animation:none}
 
 /* ---------- barra para escribir ---------- */
 footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--crema) 30%)}
@@ -725,12 +726,13 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
     abajo();
   }
   function recibir(mensajes) {
+    let hayNuevos = false;
     for (const m of mensajes) {
       const nuevo = burbuja(m);
       nuevo.dataset.id = m.id;
       const viejo = vistos.get(m.id);
-      if (viejo) viejo.replaceWith(nuevo);
-      else lista.appendChild(nuevo);
+      // Un mensaje editado (palomita al marcar) se cambia en su lugar, sin animación: antes parecía que se recargaba.
+      if (viejo) { nuevo.classList.add('editado'); viejo.replaceWith(nuevo); } else { lista.appendChild(nuevo); hayNuevos = true; }
       vistos.set(m.id, nuevo);
       if (m.teclado) pintarTeclado(m.teclado);
       if (m.de === 'bot') esperandoRespuesta = 0;
@@ -742,17 +744,19 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
       marcarRachas();
       pintarPanel();
       pintarEscribiendo();
-      abajo();
+      if (hayNuevos) abajo();
     }
   }
 
   // ---------- acciones del docente ----------
-  async function enviarCon(fn) {
+  async function enviarCon(fn, escribiendo = true) {
     for (let i = 0; i < 3; i++) {
       try {
         await fn();
-        esperandoRespuesta = Date.now();
-        pintarEscribiendo();
+        if (escribiendo) {
+          esperandoRespuesta = Date.now();
+          pintarEscribiendo();
+        }
         return true;
       } catch (e) {
         if (!(e instanceof Caida)) { aviso(e.message); return false; }
@@ -767,10 +771,14 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
     if (!t) return;
     await enviarCon(() => llamar('/chat/texto', { metodo: 'POST', cuerpo: { texto: t } }));
   }
+  // Marcar/desmarcar un nivel o grado: la palomita sale al instante y sin «escribiendo»; el bot confirma editando el mensaje.
+  const esMarca = (data) => /^(niv|gr):/.test(data) && !/:ok$/.test(data);
   async function tocarBoton(data, messageId, e) {
-    e.disabled = true;
-    await enviarCon(() => llamar('/chat/boton', { metodo: 'POST', cuerpo: { data, message_id: messageId } }));
-    setTimeout(() => { e.disabled = false; }, 1500);
+    const marca = esMarca(data);
+    if (marca) e.textContent = /^✅/.test(e.textContent) ? e.textContent.replace(/^✅\s*/, '▫️ ') : e.textContent.replace(/^\S+\s*/, '✅ ');
+    else e.disabled = true;
+    await enviarCon(() => llamar('/chat/boton', { metodo: 'POST', cuerpo: { data, message_id: messageId } }), !marca);
+    if (!marca) setTimeout(() => { e.disabled = false; }, 1500);
   }
   async function subir(archivo) {
     if (archivo.size > 10 * 1024 * 1024) return aviso('El archivo pasa de 10 MB. Mándalo más ligero o como PDF.');
