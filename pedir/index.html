@@ -109,7 +109,9 @@ a.bajar svg,a.bajar-panel svg{width:16px;height:16px}
 .tarjeta button,.btn{background:var(--coral);color:#fff;border:2px solid var(--tinta);border-radius:12px;padding:11px 14px;font-weight:900;cursor:pointer;width:100%;min-height:46px;text-decoration:none;display:block;text-align:center;box-shadow:3px 3px 0 var(--tinta);margin-bottom:8px}
 .tarjeta button:active,.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tinta)}
 .tarjeta button.sec,.btn.sec{background:#fff;color:var(--tinta)}
+.tarjeta [hidden]{display:none!important}
 .tarjeta .error{color:#b3261e;font-size:14px;font-weight:700}
+.tarjeta .o{text-align:center;font-weight:800;color:#5b6475;margin:6px 0 10px}
 .tarjeta .ok{color:#1d6b3a;font-weight:800;margin:0}
 .tarjeta .vinculos{display:flex;flex-direction:column;gap:2px}
 .tarjeta-correo::before,.tarjeta-recuperar::before{content:"✉️";display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--amarillo);border:2px solid var(--tinta);font-size:20px;margin-bottom:10px}
@@ -190,7 +192,7 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
         <li><span>1</span><div><b>Cuéntanos tu grupo</b><small>Grado, tema y cuánto tiempo. Con botones, sin formularios.</small></div></li>
         <li><span>2</span><div><b>Te proponemos</b><small>Ves la propuesta y la ajustas antes de pagar.</small></div></li>
         <li><span>3</span><div><b>La hacemos a tu medida</b><small>La primera es gratis.</small></div></li>
-        <li><span>4</span><div><b>Te llega aquí y a tu correo</b><small>Word editable y PDF.</small></div></li>
+        <li><span>4</span><div><b>Te llega aquí mismo</b><small>Word editable y PDF.</small></div></li>
       </ol>
     </section>
     <section class="bloque">
@@ -215,7 +217,7 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
     <div class="bienvenida" id="bienvenida">
       <span class="sello">Primera planeación GRATIS</span>
       <h1>Tu planeación NEM, <em>hecha a tu medida</em></h1>
-      <p>Elige con los botones o escribe lo que necesitas. Sin instalar nada: te la entregamos aquí y en tu correo.</p>
+      <p>Elige con los botones o escribe lo que necesitas. Sin instalar nada: te la entregamos aquí mismo (y en tu correo, si nos lo das).</p>
     </div>
     <div id="mensajes" aria-live="polite"></div>
   </main>
@@ -504,7 +506,32 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
       } catch (e) { mal(e instanceof Caida ? new Error('Sin conexión. Intenta otra vez.') : e); }
       confirmar.disabled = false;
     };
-    t.append(error, correo, codigo, confirmar, pedirBtn);
+    t.append(error);
+    // WhatsApp en lugar de correo (sin código): solo en las tarjetas nuevas, que traen m.telefono.
+    if (m.telefono) {
+      const tel = document.createElement('input');
+      tel.type = 'tel';
+      tel.inputMode = 'tel';
+      tel.autocomplete = 'tel-national';
+      tel.placeholder = 'Tu WhatsApp (10 números)';
+      const telBtn = document.createElement('button');
+      telBtn.type = 'button';
+      telBtn.textContent = '📱 Listo, usar mi WhatsApp';
+      telBtn.onclick = async () => {
+        error.hidden = true;
+        telBtn.disabled = true;
+        try {
+          const r = await llamar('/telefono', { metodo: 'POST', cuerpo: { telefono: tel.value, reanudar: m.reanudar } });
+          t.replaceChildren(Object.assign(document.createElement('p'), { className: 'ok', textContent: `✅ WhatsApp anotado: ${r.telefono}` }));
+          esperandoRespuesta = Date.now();
+          pintarEscribiendo();
+        } catch (e) { mal(e instanceof Caida ? new Error('Sin conexión. Intenta otra vez.') : e); }
+        telBtn.disabled = false;
+      };
+      pedirBtn.className = 'sec';
+      t.append(tel, telBtn, Object.assign(document.createElement('p'), { className: 'o', textContent: 'o con tu correo' }));
+    }
+    t.append(correo, codigo, confirmar, pedirBtn);
     return t;
   }
   // Cada mensaje va en una fila: los del bot con avatar (solo el primero de una racha), los del docente a la derecha.
