@@ -69,6 +69,10 @@ main{min-height:0;min-width:0;overflow-y:auto;-webkit-overflow-scrolling:touch;p
 .fila-msg.seguido .avatar{visibility:hidden}
 .msg{max-width:min(88%,600px);padding:11px 14px;border-radius:var(--radio);white-space:pre-wrap;overflow-wrap:anywhere}
 .msg.bot{background:#fff;border:2px solid var(--tinta);box-shadow:var(--sombra);border-bottom-left-radius:5px}
+.galeria{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;margin-bottom:6px;white-space:normal}
+.galeria a{flex:0 0 min(70%,260px);scroll-snap-align:start}
+.galeria img{display:block;width:100%;height:auto;border:2px solid var(--tinta);border-radius:10px;background:#fff}
+.msg.con-galeria{width:min(88%,600px)}
 .msg.docente{background:var(--turq);color:#fff;border:2px solid var(--tinta);border-bottom-right-radius:5px;box-shadow:var(--sombra)}
 .msg.docente a{color:#fff}
 .msg a{color:var(--turq);font-weight:700}
@@ -448,6 +452,18 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
     }
     return caja;
   }
+  // Páginas de muestra del formato (solo imágenes de nuestro sitio). Tocar una la abre en grande.
+  function galeriaDe(m) {
+    const g = document.createElement('div');
+    g.className = 'galeria';
+    for (const url of m.fotos || []) {
+      if (!/^https:\/\/planeaciones-multigrado\.github\.io\//.test(url)) continue;
+      const a = Object.assign(document.createElement('a'), { href: url, target: '_blank', rel: 'noopener' });
+      a.appendChild(Object.assign(document.createElement('img'), { src: url, alt: 'Página de ejemplo de una planeación', loading: 'lazy' }));
+      g.appendChild(a);
+    }
+    return g;
+  }
   function tarjetaArchivo(m) {
     return filaArchivo(m.de === 'bot' && m.archivo.token ? m.archivo.token : '', m.archivo, 'bajar');
   }
@@ -543,6 +559,7 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
     const e = document.createElement('div');
     e.className = `msg ${quien}`;
     if (m.tipo === 'archivo') e.appendChild(tarjetaArchivo(m));
+    if (m.tipo === 'galeria') { e.classList.add('con-galeria'); e.appendChild(galeriaDe(m)); }
     const texto = document.createElement('div');
     pintarHtml(texto, m.html || '');
     if (texto.textContent.trim()) e.appendChild(texto);
