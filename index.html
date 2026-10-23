@@ -81,5 +81,5 @@ document.querySelectorAll('header .btn, main .btn').forEach(function(x){o.observ
 var q=location.search,r=document.referrer,d=/fbclid|utm_source=(fb|facebook|ig)/i.test(q)||/facebook|instagram|fb.com/i.test(r)?'facebook':/google./i.test(r)?'google':r&&r.indexOf(location.host)<0?'otro':'directo';
 fetch('./conexion.json?x='+Date.now()).then(function(x){return x.json()}).then(function(c){return fetch(c.url+'/visita',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({desde:d,pagina:location.pathname})})})
 .then(function(x){if(x.ok)try{localStorage.setItem('pm_visita','1')}catch(e){}}).catch(function(){})})();</script>
-<footer><div class="cont">Material original elaborado a partir del Programa Sintético de la SEP. Sitio independiente, no afiliado a la SEP.</div></footer>
+<footer><div class="cont">Material original elaborado a partir del Programa Sintético de la SEP. Sitio independiente, no afiliado a la SEP. · <a href="./privacidad/">Aviso de privacidad</a></div></footer>
 </body></html>
