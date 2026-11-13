@@ -648,7 +648,8 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
       confirmar.disabled = false;
     };
     t.append(error);
-    // WhatsApp en lugar de correo (sin código): solo en las tarjetas nuevas, que traen m.telefono.
+    // WhatsApp en lugar de correo: solo en las tarjetas nuevas, que traen m.telefono. Si el bot puede, manda un código
+    // por WhatsApp para confirmarlo (así los archivos le llegan ahí); si no, el número queda anotado sin código.
     if (m.telefono) {
       const tel = document.createElement('input');
       tel.type = 'tel';
@@ -658,19 +659,48 @@ footer{padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:line
       const telBtn = document.createElement('button');
       telBtn.type = 'button';
       telBtn.textContent = '📱 Listo, usar mi WhatsApp';
+      const telCodigo = document.createElement('input');
+      telCodigo.inputMode = 'numeric';
+      telCodigo.autocomplete = 'one-time-code';
+      telCodigo.maxLength = 6;
+      telCodigo.placeholder = 'Código de 6 números';
+      telCodigo.hidden = true;
+      const telConfirmar = document.createElement('button');
+      telConfirmar.type = 'button';
+      telConfirmar.textContent = 'Confirmar';
+      telConfirmar.hidden = true;
+      const listo = (texto) => {
+        t.replaceChildren(Object.assign(document.createElement('p'), { className: 'ok', textContent: texto }));
+        esperandoRespuesta = Date.now();
+        pintarEscribiendo();
+      };
       telBtn.onclick = async () => {
         error.hidden = true;
         telBtn.disabled = true;
         try {
-          const r = await llamar('/telefono', { metodo: 'POST', cuerpo: { telefono: tel.value, reanudar: m.reanudar } });
-          t.replaceChildren(Object.assign(document.createElement('p'), { className: 'ok', textContent: `✅ WhatsApp anotado: ${r.telefono}` }));
-          esperandoRespuesta = Date.now();
-          pintarEscribiendo();
+          const r = await llamar('/telefono', { metodo: 'POST', cuerpo: { telefono: tel.value, reanudar: m.reanudar, conCodigo: true } });
+          if (r.codigo) {
+            p.textContent = `Te mandamos un código por WhatsApp al ${r.telefono}. Escríbelo aquí. Si no te llega en unos minutos, revisa el número o usa tu correo.`;
+            telCodigo.hidden = false;
+            telConfirmar.hidden = false;
+            telBtn.textContent = 'Mandar otro código';
+            telBtn.className = 'sec';
+            telCodigo.focus();
+          } else listo(`✅ WhatsApp anotado: ${r.telefono}`);
         } catch (e) { mal(e instanceof Caida ? new Error('Sin conexión. Intenta otra vez.') : e); }
         telBtn.disabled = false;
       };
+      telConfirmar.onclick = async () => {
+        error.hidden = true;
+        telConfirmar.disabled = true;
+        try {
+          const r = await llamar('/telefono/verificar', { metodo: 'POST', cuerpo: { telefono: tel.value, codigo: telCodigo.value } });
+          listo(`✅ WhatsApp confirmado: ${r.telefono}`);
+        } catch (e) { mal(e instanceof Caida ? new Error('Sin conexión. Intenta otra vez.') : e); }
+        telConfirmar.disabled = false;
+      };
       pedirBtn.className = 'sec';
-      t.append(tel, telBtn, Object.assign(document.createElement('p'), { className: 'o', textContent: 'o con tu correo' }));
+      t.append(tel, telCodigo, telConfirmar, telBtn, Object.assign(document.createElement('p'), { className: 'o', textContent: 'o con tu correo' }));
     }
     t.append(correo, codigo, confirmar, pedirBtn);
     return t;
